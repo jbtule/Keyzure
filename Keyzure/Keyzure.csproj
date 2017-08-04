@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net452</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WindowsAzure.Storage" Version="8.2.1" />
+    <PackageReference Include="Keyczar" Version="0.8.0-alpha1" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="2.3.2" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.Cryptography" Version="2.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Keys\" />
+  </ItemGroup>
+</Project>
