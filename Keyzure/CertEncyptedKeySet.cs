@@ -3,7 +3,7 @@ using Keyczar;
 
 namespace Keyzure
 {
-    public class CertCryptedKeySet : IRootProviderKeySet
+    public class CertCryptedKeySet : ILayeredKeySet
     {
         public KeyMetadata Metadata => throw new NotImplementedException();
 
