@@ -22,7 +22,7 @@ namespace Keyzure
         public CertCryptedKeySet(IKeySet keySet, Stream certStream, Func<string> passwordPrompt = null)
         {
             _keySet = keySet;
-            _certKeySet = ImportedKeySet.Import.PkcsKey(KeyPurpose.DecryptAndEncrypt, certStream, passwordPrompt);
+            _certKeySet = ImportedKeySet.Import.Pkcs12Keys(KeyPurpose.DecryptAndEncrypt, certStream, passwordPrompt);
             _crypter = new Crypter(_certKeySet);
             _sessionPacker = new BsonSessionKeyPacker();
         }
