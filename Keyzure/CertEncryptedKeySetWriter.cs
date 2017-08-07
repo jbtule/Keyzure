@@ -18,11 +18,11 @@ namespace Keyzure
         private readonly BsonSessionKeyPacker _sessionPacker;
 
 
-        public static Func<IKeySetWriter, CertEncryptedKeySetWriter> Creator(IKeySetWriter writer, Stream certStream, Func<string> passwordPrompt = null)
-            => keySet => new CertEncryptedKeySetWriter(writer, certStream, passwordPrompt);
+        public static Func<IKeySetWriter, CertEncryptedKeySetWriter> Creator(Stream certStream, Func<string> passwordPrompt = null)
+            => writer => new CertEncryptedKeySetWriter(writer, certStream, passwordPrompt);
 
-        public static Func<IKeySetWriter, CertEncryptedKeySetWriter> Creator(IKeySetWriter writer, string thumbPrint)
-            => keySet => new CertEncryptedKeySetWriter(writer, thumbPrint);
+        public static Func<IKeySetWriter, CertEncryptedKeySetWriter> Creator(string thumbPrint)
+            => writer => new CertEncryptedKeySetWriter(writer, thumbPrint);
 
         private IKeySetWriter _writer;
 
