@@ -17,6 +17,14 @@ namespace Keyzure
 {
     public class CertCryptedKeySet : ILayeredKeySet
     {
+
+        public static Func<IKeySet, CertCryptedKeySet> Creator(
+            IKeySet keyset, Stream certStream, Func<string> passwordPrompt = null)
+                => keySet => new CertCryptedKeySet(keyset, certStream, passwordPrompt);
+
+        public static Func<IKeySet, CertCryptedKeySet> Creator(
+            IKeySet keyset, string thumbPrint)
+                => keySet => new CertCryptedKeySet(keyset, thumbPrint);
         private IKeySet _keySet;
 
         public CertCryptedKeySet(IKeySet keySet, Stream certStream, Func<string> passwordPrompt = null)
