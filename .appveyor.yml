@@ -1,0 +1,15 @@
+image: Visual Studio 2017
+
+install:
+  - cmd: git submodule update --init --recursive
+
+build: off
+
+build_script:
+  - cmd: msbuild /t:restore
+  - cmd: msbuild
+
+artifacts:
+  - path: '**\bin\*\*.nupkg'
+
+skip_branch_with_pr: true

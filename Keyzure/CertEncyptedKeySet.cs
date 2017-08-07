@@ -15,19 +15,22 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Keyczar.Crypto;
 namespace Keyzure
 {
-    public class CertCryptedKeySet : ILayeredKeySet
+    public class CertEncryptedKeySet : ILayeredKeySet
     {
+        private ImportedKeySet _certKeySet;
+        private Crypter _crypter;
+        private readonly BsonSessionKeyPacker _sessionPacker;
 
-        public static Func<IKeySet, CertCryptedKeySet> Creator(
+        public static Func<IKeySet, CertEncryptedKeySet> Creator(
             IKeySet keyset, Stream certStream, Func<string> passwordPrompt = null)
-                => keySet => new CertCryptedKeySet(keyset, certStream, passwordPrompt);
+                => keySet => new CertEncryptedKeySet(keyset, certStream, passwordPrompt);
 
-        public static Func<IKeySet, CertCryptedKeySet> Creator(
+        public static Func<IKeySet, CertEncryptedKeySet> Creator(
             IKeySet keyset, string thumbPrint)
-                => keySet => new CertCryptedKeySet(keyset, thumbPrint);
+                => keySet => new CertEncryptedKeySet(keyset, thumbPrint);
         private IKeySet _keySet;
 
-        public CertCryptedKeySet(IKeySet keySet, Stream certStream, Func<string> passwordPrompt = null)
+        public CertEncryptedKeySet(IKeySet keySet, Stream certStream, Func<string> passwordPrompt = null)
         {
             _keySet = keySet;
             _certKeySet = ImportedKeySet.Import.Pkcs12Keys(KeyPurpose.DecryptAndEncrypt, certStream, passwordPrompt);
@@ -35,7 +38,27 @@ namespace Keyzure
             _sessionPacker = new BsonSessionKeyPacker();
         }
 
-        public CertCryptedKeySet(IKeySet keySet, string thumbPrint)
+        internal static Key KeyFromBouncyCastle(RsaPrivateCrtKeyParameters keyParam)
+        {
+            return new RsaPrivateKey()
+                   {
+                       PublicKey = new RsaPublicKey()
+                                   {
+                                       Modulus = keyParam.Modulus.ToSystemBigInteger(),
+                                       PublicExponent = keyParam.PublicExponent.ToSystemBigInteger(),
+                                       Size = keyParam.Modulus.BitLength,
+                                   },
+                       PrimeP = keyParam.P.ToSystemBigInteger(),
+                       PrimeExponentP = keyParam.DP.ToSystemBigInteger(),
+                       PrimeExponentQ = keyParam.DQ.ToSystemBigInteger(),
+                       PrimeQ = keyParam.Q.ToSystemBigInteger(),
+                       CrtCoefficient = keyParam.QInv.ToSystemBigInteger(),
+                       PrivateExponent = keyParam.Exponent.ToSystemBigInteger(),
+                       Size = keyParam.Modulus.BitLength,
+                   };
+        }
+
+        public CertEncryptedKeySet(IKeySet keySet, string thumbPrint)
         {
             var certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             certStore.Open(OpenFlags.ReadOnly);
@@ -43,22 +66,7 @@ namespace Keyzure
             var cert = certCollection.OfType<X509Certificate2>().FirstOrDefault();
             var privKey = cert?.GetRSAPrivateKey();
             var keyParam = DotNetUtilities.GetRsaKeyPair(privKey).Private as RsaPrivateCrtKeyParameters;
-            var key = new RsaPrivateKey()
-                  {
-                      PublicKey = new RsaPublicKey()
-                                  {
-                                      Modulus = keyParam.Modulus.ToSystemBigInteger(),
-                                      PublicExponent = keyParam.PublicExponent.ToSystemBigInteger(),
-                                      Size = keyParam.Modulus.BitLength,
-                                  },
-                      PrimeP = keyParam.P.ToSystemBigInteger(),
-                      PrimeExponentP = keyParam.DP.ToSystemBigInteger(),
-                      PrimeExponentQ = keyParam.DQ.ToSystemBigInteger(),
-                      PrimeQ = keyParam.Q.ToSystemBigInteger(),
-                      CrtCoefficient = keyParam.QInv.ToSystemBigInteger(),
-                      PrivateExponent = keyParam.Exponent.ToSystemBigInteger(),
-                      Size = keyParam.Modulus.BitLength,
-                  };
+            var key = KeyFromBouncyCastle(keyParam);
 
             _certKeySet = new ImportedKeySet(key, KeyPurpose.DecryptAndEncrypt, "imported from X509Store");
 
@@ -87,7 +95,7 @@ namespace Keyzure
         }
 
 
-        public KeyMetadata Metadata => throw new NotImplementedException();
+        public KeyMetadata Metadata => _keySet.Metadata;
 
         public byte[] GetKeyData(int version)
         {
@@ -113,9 +121,7 @@ namespace Keyzure
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
-        private ImportedKeySet _certKeySet;
-        private Crypter _crypter;
-        private BsonSessionKeyPacker _sessionPacker;
+   
 
         protected virtual void Dispose(bool disposing)
         {

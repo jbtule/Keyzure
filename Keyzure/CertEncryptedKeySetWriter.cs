@@ -1,22 +1,81 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Keyczar;
+using Keyczar.Compat;
+using Keyczar.Unofficial;
+using Keyczar.Util;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
+
 namespace Keyzure
 {
     public class CertEncryptedKeySetWriter : ILayeredKeySetWriter
     {
+        private ImportedKeySet _certKeySet;
+        private Encrypter _encrypter;
+        private readonly BsonSessionKeyPacker _sessionPacker;
+
+
+        public static Func<IKeySetWriter, CertEncryptedKeySetWriter> Creator(IKeySetWriter writer, Stream certStream, Func<string> passwordPrompt = null)
+            => keySet => new CertEncryptedKeySetWriter(writer, certStream, passwordPrompt);
+
+        public static Func<IKeySetWriter, CertEncryptedKeySetWriter> Creator(IKeySetWriter writer, string thumbPrint)
+            => keySet => new CertEncryptedKeySetWriter(writer, thumbPrint);
+
+        private IKeySetWriter _writer;
+
+        public CertEncryptedKeySetWriter(IKeySetWriter writer, Stream certStream, Func<string> passwordPrompt = null)
+        {
+            _writer = writer;
+            _certKeySet = ImportedKeySet.Import.Pkcs12Keys(KeyPurpose.DecryptAndEncrypt, certStream, passwordPrompt);
+            _encrypter = new Crypter(_certKeySet);
+            _sessionPacker = new BsonSessionKeyPacker();
+        }
+
+        public CertEncryptedKeySetWriter(IKeySetWriter writer, string thumbPrint)
+        {
+            var certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            certStore.Open(OpenFlags.ReadOnly);
+            var certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbPrint, false);
+            var cert = certCollection.OfType<X509Certificate2>().FirstOrDefault();
+            var privKey = cert?.GetRSAPrivateKey();
+            var keyParam = DotNetUtilities.GetRsaKeyPair(privKey).Private as RsaPrivateCrtKeyParameters;
+            var key = CertEncryptedKeySet.KeyFromBouncyCastle(keyParam);
+
+            _certKeySet = new ImportedKeySet(key, KeyPurpose.DecryptAndEncrypt, "imported from X509Store");
+
+            _writer = writer;
+            _encrypter = new Encrypter(_certKeySet);
+            _sessionPacker = new BsonSessionKeyPacker();
+
+        }
+
+
         public bool Finish()
         {
-            throw new NotImplementedException();
+            return _writer.Finish();
         }
 
         public void Write(byte[] keyData, int version)
         {
-            throw new NotImplementedException();
+
+            using (var sessionCrypter = new SessionCrypter(_encrypter, keySize: 256,
+                symmetricKeyType: UnofficialKeyType.AesAead, keyPacker: _sessionPacker))
+            {
+                var sessionMaterial = sessionCrypter.SessionMaterial;
+                var cipherData = sessionCrypter.Encrypt(keyData);
+                var session = new CertEncryptedKeySet.SessionPack(sessionMaterial, cipherData);
+                var bsonData = Utility.ToBson(session);
+                _writer.Write(bsonData, version);
+            }
         }
 
         public void Write(KeyMetadata metadata)
         {
-            throw new NotImplementedException();
+            metadata.Encrypted = true;
+            _writer.Write(metadata);
         }
 
         #region IDisposable Support
@@ -28,29 +87,20 @@ namespace Keyzure
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
+                    _certKeySet = _certKeySet.SafeDispose();
+                    _encrypter = _encrypter.SafeDispose();
+                    _writer = null;
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
+                
                 disposedValue = true;
             }
         }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~CertEncryptedKeySetWriter() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
 
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
         }
         #endregion
 
