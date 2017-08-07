@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.OleDb;
 using System.Linq;
 using Keyczar;
 using Keyzure;
@@ -190,9 +191,10 @@ namespace Test
             using( var ks = StorageKeySet.Create(GetClientCred(), DefaultContainer, testPath)())
             {
                 var newKeyId = WebBase64.FromBytes(ks.Metadata.Versions.First().KeyId);
-
-                Expect(newCipherText.ToString(), Does.Not.StartsWith(origKeyId));
-                Expect(newCipherText.ToString(), Does.Not.StartsWith(newKeyId));
+                var prefix = new byte[Keyczar.Keyczar.HeaderLength];
+                Array.Copy(newCipherText.ToBytes(),prefix, prefix.Length);
+                Expect(prefix, Is.Not.EqualTo(origKeyId.ToBytes()));
+                Expect(prefix, Is.EqualTo(newKeyId.ToBytes()));
 
             } 
             
