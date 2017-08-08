@@ -9,6 +9,7 @@ namespace Test
 {
     [TestFixture(Category = "AzureEmulator")]
     [NonParallelizable]
+    [Platform(Include = "Win")]
     public class StorageTests:AssertionHelper
     {
         public static readonly string DefaultContainer = "keyzure-test";

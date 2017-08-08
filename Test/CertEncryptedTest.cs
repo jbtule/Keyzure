@@ -77,6 +77,7 @@ namespace Test
         }
         
         [Test]
+        [Platform(Include = "Win")]
         public void BasicThumbprintTest()
         {
             var dataPath = Path.Combine(GetTestDirPath(), "aes-gcm-certcrypted");
