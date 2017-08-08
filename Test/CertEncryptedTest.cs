@@ -37,6 +37,7 @@ namespace Test
         public static string Input => "This is some test data";
 
         [OneTimeSetUp]
+        [Platform(Include = "Win")]
         public void Init()
         {
             var cert = GetCert();
