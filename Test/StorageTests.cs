@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data.OleDb;
 using System.Linq;
 using Keyczar;
 using Keyzure;
@@ -13,7 +12,7 @@ namespace Test
     public class StorageTests:AssertionHelper
     {
         public static readonly string DefaultContainer = "keyzure-test";
-        private static String input = "This is some test data";
+        public static string Input => "This is some test data";
         private bool _wasUp;
 
         [OneTimeSetUp]
@@ -104,7 +103,7 @@ namespace Test
                 using (var origKs = new StorageKeySet(GetClientCred(), DefaultContainer, "no-primary"))
                 using (var encrypter = new Encrypter(origKs))
                 {
-                    cipherText = encrypter.Encrypt(input);
+                    cipherText = encrypter.Encrypt(Input);
                 }
                     
                 using (var origKs = new StorageKeySet(GetClientCred(), DefaultContainer, "no-primary"))
@@ -122,7 +121,7 @@ namespace Test
                 using (var crypter = new Crypter(origKs))
                 {
                     var output = crypter.Decrypt(cipherText);
-                    Expect(output, Is.EqualTo(input));
+                    Expect(output, Is.EqualTo(Input));
                 }
                     
             
@@ -149,7 +148,7 @@ namespace Test
             using (var ks = new StorageKeySet(GetClientCred(), DefaultContainer, testPath))
             using (var encrypter = new Encrypter(ks))
             {
-                origCipherText = encrypter.Encrypt(input);
+                origCipherText = encrypter.Encrypt(Input);
                 origKeyId = WebBase64.FromBytes(ks.Metadata.Versions.First().KeyId);
             }
                     
@@ -185,7 +184,7 @@ namespace Test
             using (var ks = new StorageKeySet(GetClientCred(), DefaultContainer, testPath))
             using (var encrypter = new Encrypter(ks))
             {
-                newCipherText = encrypter.Encrypt(input);
+                newCipherText = encrypter.Encrypt(Input);
             }
             
             using( var ks = StorageKeySet.Create(GetClientCred(), DefaultContainer, testPath)())

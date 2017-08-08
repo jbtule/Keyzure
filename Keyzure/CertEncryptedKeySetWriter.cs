@@ -67,8 +67,9 @@ namespace Keyzure
                 var sessionMaterial = sessionCrypter.SessionMaterial;
                 var cipherData = sessionCrypter.Encrypt(keyData);
                 var session = new CertEncryptedKeySet.SessionPack(sessionMaterial, cipherData);
-                var bsonData = Utility.ToBson(session);
-                _writer.Write(bsonData, version);
+                var json = Utility.ToJson(session);
+                var jsonData = Keyczar.Keyczar.RawStringEncoding.GetBytes(json);
+                _writer.Write(jsonData, version);
             }
         }
 

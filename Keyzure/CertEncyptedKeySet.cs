@@ -13,6 +13,7 @@ using Newtonsoft.Json.Serialization;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Crypto.Parameters;
 using Keyczar.Crypto;
+
 namespace Keyzure
 {
     public class CertEncryptedKeySet : ILayeredKeySet
@@ -21,13 +22,11 @@ namespace Keyzure
         private Crypter _crypter;
         private readonly BsonSessionKeyPacker _sessionPacker;
 
-        public static Func<IKeySet, CertEncryptedKeySet> Creator(
-            IKeySet keyset, Stream certStream, Func<string> passwordPrompt = null)
-                => keySet => new CertEncryptedKeySet(keyset, certStream, passwordPrompt);
+        public static Func<IKeySet, CertEncryptedKeySet> Creator(Stream certStream, Func<string> passwordPrompt = null)
+                => keySet => new CertEncryptedKeySet(keySet, certStream, passwordPrompt);
 
-        public static Func<IKeySet, CertEncryptedKeySet> Creator(
-            IKeySet keyset, string thumbPrint)
-                => keySet => new CertEncryptedKeySet(keyset, thumbPrint);
+        public static Func<IKeySet, CertEncryptedKeySet> Creator(string thumbPrint)
+                => keySet => new CertEncryptedKeySet(keySet, thumbPrint);
         private IKeySet _keySet;
 
         public CertEncryptedKeySet(IKeySet keySet, Stream certStream, Func<string> passwordPrompt = null)
@@ -85,12 +84,13 @@ namespace Keyzure
 
             public SessionPack(WebBase64 sessionMaterial, byte[] cipherText)
             {
-                SessionMaterial = sessionMaterial.ToBytes();
+                SessionMaterial = sessionMaterial;
                 CipherText = cipherText;
             }
 
-            public byte[] SessionMaterial { get; set; }
+            public WebBase64 SessionMaterial { get; set; }
 
+            [JsonConverter(typeof (WebSafeBase64ByteConverter))]
             public byte[] CipherText { get; set; }
         }
 
@@ -99,21 +99,13 @@ namespace Keyzure
 
         public byte[] GetKeyData(int version)
         {
-            SessionPack pack;
             var data = _keySet.GetKeyData(version);
-            using (var ms = new MemoryStream(data))
-            using (BsonReader reader = new BsonReader(ms))
-            {
-                var jsonSerializer =
-                    JsonSerializer.Create(new JsonSerializerSettings
-                    {
-                        ContractResolver =new CamelCasePropertyNamesContractResolver()
-                    });
-                pack = jsonSerializer.Deserialize<SessionPack>(reader);
+            var jsonString = Keyczar.Keyczar.RawStringEncoding.GetString(data);
+            var pack = JsonConvert.DeserializeObject<SessionPack>(jsonString);
 
-            }
+          
 
-            using (var sessionCrypter = new SessionCrypter(_crypter, WebBase64.FromBytes(pack.SessionMaterial),keyPacker:_sessionPacker))
+            using (var sessionCrypter = new SessionCrypter(_crypter, pack.SessionMaterial,keyPacker:_sessionPacker))
             {
                 return sessionCrypter.Decrypt(pack.CipherText);
             }
