@@ -13,51 +13,19 @@ namespace Test
     [TestFixture]
     public class CertEncryptedTest:AssertionHelper
     {
-        private string GetTestDirPath()
+        public  static string GetTestDirPath()
         {
-            var location = Assembly.GetAssembly(this.GetType()).Location;
+            var location = Assembly.GetAssembly(typeof(CertEncryptedTest)).Location;
             var testDir = Path.Combine(location,"..", "..", "..", "..", "..", "TestData");
             return Path.GetFullPath(testDir);
         }
 
-        private string GetThumbprint() => File.ReadAllText(Path.Combine(GetTestDirPath(), "cert", "thumbprint.txt")).Trim();
+        public static string PfxPath() => Path.Combine(GetTestDirPath(), "cert", "private.pfx");
 
-        private X509Certificate2 GetCert()
-        {
-            var certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            certStore.Open(OpenFlags.ReadOnly);
-            var thumbPrint = GetThumbprint();
-            var certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbPrint, false);
-            return certCollection.OfType<X509Certificate2>().FirstOrDefault();
-        }
-
-        private string PfxPath() => Path.Combine(GetTestDirPath(), "cert", "private.pfx");
-
-        private static string PfxPass => "test";
+        public static string PfxPass => "test";
         public static string Input => "This is some test data";
 
-        [OneTimeSetUp]
-        [Platform(Include = "Win")]
-        public void Init()
-        {
-            var cert = GetCert();
-            if (cert == null)
-            {
-                var certBundle = new X509Certificate2Collection();
-                certBundle.Import(PfxPath(),PfxPass, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
-                var cert2 = certBundle.OfType<X509Certificate2>().First(it => it.HasPrivateKey && it.Thumbprint == GetThumbprint());
-                var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                store.Open(OpenFlags.ReadWrite);
-                store.Add(cert2);
-                store.Close();
-                cert = GetCert();
-            }
-            if(cert == null)
-            {
-                throw new Exception("Unable to load cert into store");
-            }
-        }
-        
+    
         [Test]
         public void BasicPfxTest()
         {
@@ -76,24 +44,6 @@ namespace Test
                 Expect(primaryDecrypted, Is.EqualTo(Input));
             }
         }
-        
-        [Test]
-        [Platform(Include = "Win")]
-        public void BasicThumbprintTest()
-        {
-            var dataPath = Path.Combine(GetTestDirPath(), "aes-gcm-certcrypted");
-
-            var activeCiphertext = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "1.out")).First();
-            var primaryCiphertext = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "2.out")).First();
-            using (var ks = KeySet.LayerSecurity(FileSystemKeySet.Creator(dataPath),
-                CertEncryptedKeySet.Creator(GetThumbprint())))
-            using (var crypter = new Crypter(ks))
-            {
-                var activeDecrypted = crypter.Decrypt(activeCiphertext);
-                Expect(activeDecrypted, Is.EqualTo(Input));
-                var primaryDecrypted = crypter.Decrypt(primaryCiphertext);
-                Expect(primaryDecrypted, Is.EqualTo(Input));
-            }
-        }
+       
     }
 }
