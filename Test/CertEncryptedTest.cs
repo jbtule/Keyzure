@@ -20,7 +20,7 @@ namespace Test
             return Path.GetFullPath(testDir);
         }
 
-        private string GetThumbprint() => File.ReadAllText(Path.Combine(GetTestDirPath(), "cert", "thumbprint.txt"));
+        private string GetThumbprint() => File.ReadAllText(Path.Combine(GetTestDirPath(), "cert", "thumbprint.txt")).Trim();
 
         private X509Certificate2 GetCert()
         {
