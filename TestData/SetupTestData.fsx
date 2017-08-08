@@ -2,6 +2,9 @@
 #if run_with_bin_sh
   exec fsharpi --exec $0 $*
 #endif
+//Run with fsi --exec SetupTestData.fsx on windows, or ./SetupTestData.fsx on Mac/Linux
+//Use this script to regenerate TestData and certs
+
 
 #I "../Keyzure/bin/Debug/net46/"
 #r "Keyczar.dll"

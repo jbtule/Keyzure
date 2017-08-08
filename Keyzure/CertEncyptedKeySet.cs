@@ -79,14 +79,17 @@ namespace Keyzure
         {
             public SessionPack()
             {
-                
             }
 
             public SessionPack(WebBase64 sessionMaterial, byte[] cipherText)
             {
+                Version = 1;
+
                 SessionMaterial = sessionMaterial;
                 CipherText = cipherText;
             }
+            
+            public int Version { get; set; }
 
             public WebBase64 SessionMaterial { get; set; }
 
