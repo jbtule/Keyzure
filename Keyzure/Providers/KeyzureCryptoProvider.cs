@@ -65,7 +65,7 @@ namespace Keyzure.Providers
 
         public void Release(object cryptoInstance)
         {
-            throw new System.NotImplementedException();
+            (cryptoInstance as IDisposable)?.Dispose();
         }
         
         internal static string GetAlgorithmFromKey(Key key)
