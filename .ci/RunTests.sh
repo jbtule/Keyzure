@@ -8,6 +8,6 @@ runTest(){
    fi
 }
 
-runTest Test/bin/Debug/net46/Test.dll --where="cat != AzureEmulator"
+runTest Test/bin/Debug/net46/Test.exe --where="cat != AzureEmulator"
 
 exit $?
