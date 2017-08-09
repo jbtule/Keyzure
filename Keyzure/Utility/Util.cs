@@ -8,12 +8,10 @@ namespace Keyzure.Utility
     {
         public static Key GetPrimaryKey(this IKeySet keySet)
         {
-            var primaryVersion = keySet.Metadata.Versions.SingleOrDefault(it => it.Status == KeyStatus.Primary)?.VersionNumber;
-            if (primaryVersion == null)
-            {
-                return null;
-            }
-            return keySet.GetKey(primaryVersion.Value);
+            var primaryKeyVersion = keySet.Metadata.GetPrimaryKeyVersion();
+            return primaryKeyVersion == null 
+                ?  null 
+                : keySet.GetKey(primaryKeyVersion.VersionNumber);
         }
     }
 }

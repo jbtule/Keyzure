@@ -21,11 +21,12 @@ namespace Keyzure
             _options = options;
         }
 
-        public KeyMetadata Metadata => KeyMetadata.Read(Keyczar.Keyczar.RawStringEncoding.GetString(GetFile("meta")));
+        public KeyMetadata Metadata => KeyMetadata.Read(this.GetConfig().RawStringEncoding.GetString(GetFile("meta")));
 
         public byte[] GetKeyData(int version) => GetFile(version.ToString(CultureInfo.InvariantCulture));
+        public KeyczarConfig Config { get; set; }
 
-     
+
         private CloudBlobClient _client;
         private CloudBlobContainer _container;
         private string _keySetPath;

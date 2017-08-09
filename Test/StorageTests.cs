@@ -191,7 +191,7 @@ namespace Test
             using( var ks = StorageKeySet.Create(GetClientCred(), DefaultContainer, testPath)())
             {
                 var newKeyId = WebBase64.FromBytes(ks.Metadata.Versions.First().KeyId);
-                var prefix = new byte[Keyczar.Keyczar.HeaderLength];
+                var prefix = new byte[KeyczarConst.HeaderLength];
                 Array.Copy(newCipherText.ToBytes(),prefix, prefix.Length);
                 Expect(prefix, Is.Not.EqualTo(origKeyId.ToBytes()));
                 Expect(prefix, Is.EqualTo(newKeyId.ToBytes()));

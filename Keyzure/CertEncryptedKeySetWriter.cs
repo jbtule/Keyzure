@@ -58,6 +58,8 @@ namespace Keyzure
             return _writer.Finish();
         }
 
+        public KeyczarConfig Config { get; set; }
+
         public void Write(byte[] keyData, int version)
         {
 
@@ -68,7 +70,7 @@ namespace Keyzure
                 var cipherData = sessionCrypter.Encrypt(keyData);
                 var session = new CertEncryptedKeySet.SessionPack(sessionMaterial, cipherData);
                 var json = Keyczar.Util.Utility.ToJson(session);
-                var jsonData = Keyczar.Keyczar.RawStringEncoding.GetBytes(json);
+                var jsonData = this.GetConfig().RawStringEncoding.GetBytes(json);
                 _writer.Write(jsonData, version);
             }
         }

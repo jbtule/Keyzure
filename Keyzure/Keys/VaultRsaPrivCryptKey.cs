@@ -12,22 +12,22 @@ namespace Keyzure.Keys
         {
         }
 
-        public HashingStream GetAuthSigningStream(Keyczar.Keyczar keyczar)
+        public HashingStream GetAuthSigningStream(KeyczarBase keyczar)
         {
             throw new NotImplementedException();
         }
 
-        public VerifyingStream GetAuthVerifyingStream(Keyczar.Keyczar keyczar)
+        public VerifyingStream GetAuthVerifyingStream(KeyczarBase keyczar)
         {
             throw new NotImplementedException();
         }
 
-        public FinishingStream GetDecryptingStream(Stream output, Keyczar.Keyczar keyczar)
+        public FinishingStream GetDecryptingStream(Stream output, KeyczarBase keyczar)
         {
             throw new NotImplementedException();
         }
 
-        public FinishingStream GetEncryptingStream(Stream output, Keyczar.Keyczar keyczar)
+        public FinishingStream GetEncryptingStream(Stream output, KeyczarBase keyczar)
         {
             throw new NotImplementedException();
         }

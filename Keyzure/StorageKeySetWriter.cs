@@ -56,7 +56,7 @@ namespace Keyzure
             => WriteFile(version.ToString(CultureInfo.InvariantCulture), keyData);
 
         public void Write(KeyMetadata metadata) 
-            => WriteFile("meta", Keyczar.Keyczar.RawStringEncoding.GetBytes(metadata.ToJson()));
+            => WriteFile("meta", this.GetConfig().RawStringEncoding.GetBytes(metadata.ToJson()));
 
         public bool Finish()
         {
@@ -106,8 +106,10 @@ namespace Keyzure
 
             return _success;
         }
-        
-        
+
+        public KeyczarConfig Config { get; set; }
+
+
         public static async Task WaitForCopyAsync(CloudBlob blob)
         {
             var copyInProgress = true;

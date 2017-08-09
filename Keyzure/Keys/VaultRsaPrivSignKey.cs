@@ -11,12 +11,12 @@ namespace Keyzure.Keys
         {
         }
 
-        public HashingStream GetSigningStream(Keyczar.Keyczar keyczar)
+        public HashingStream GetSigningStream(KeyczarBase keyczar)
         {
             throw new NotImplementedException();
         }
 
-        public VerifyingStream GetVerifyingStream(Keyczar.Keyczar keyczar)
+        public VerifyingStream GetVerifyingStream(KeyczarBase keyczar)
         {
             throw new NotImplementedException();
         }

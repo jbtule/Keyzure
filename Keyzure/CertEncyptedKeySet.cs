@@ -103,7 +103,7 @@ namespace Keyzure
         public byte[] GetKeyData(int version)
         {
             var data = _keySet.GetKeyData(version);
-            var jsonString = Keyczar.Keyczar.RawStringEncoding.GetString(data);
+            var jsonString = this.GetConfig().RawStringEncoding.GetString(data);
             var pack = JsonConvert.DeserializeObject<SessionPack>(jsonString);
 
           
@@ -113,6 +113,8 @@ namespace Keyzure
                 return sessionCrypter.Decrypt(pack.CipherText);
             }
         }
+
+        public KeyczarConfig Config { get; set; }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
