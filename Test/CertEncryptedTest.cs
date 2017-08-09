@@ -1,12 +1,14 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using Keyczar;
 using Keyzure;
-using Microsoft.WindowsAzure.Storage;
 using NUnit.Framework;
-using System.Security.Cryptography.X509Certificates;
+using Keyzure.Providers;
+using NUnit.Framework.Internal.Filters;
 
 namespace Test
 {
@@ -43,6 +45,71 @@ namespace Test
                 var primaryDecrypted = crypter.Decrypt(primaryCiphertext);
                 Expect(primaryDecrypted, Is.EqualTo(Input));
             }
+        }
+        
+        
+        [Test]
+        public void BasicPfxTestSign()
+        {
+            var dataPath = Path.Combine(GetTestDirPath(), "rsa-sign-certcrypted");
+
+            var activeSig = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "1.out")).First();
+            var primarySig = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "2.out")).First();
+            using (var pfxStream = File.OpenRead(PfxPath()))
+            using (var ks = KeySet.LayerSecurity(FileSystemKeySet.Creator(dataPath),
+                CertEncryptedKeySet.Creator(pfxStream, ()=> PfxPass)))
+            using (var verifier = new Verifier(ks))
+            {
+                var activeDecrypted = verifier.Verify(Input, activeSig);
+                Expect(activeDecrypted, Is.True);
+                var primaryDecrypted = verifier.Verify(Input, primarySig);
+                Expect(primaryDecrypted, Is.True);
+            }
+        }
+        
+        [Test]
+        public void BasicPfxTestPublicVerify()
+        {
+            var dataPath = Path.Combine(GetTestDirPath(), "rsa-sign-certcrypted");
+            var keySetPath = Path.Combine(GetTestDirPath(), "rsa-sign-certcrypted.public");
+            
+            var activeSig = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "1.out")).First();
+            var primarySig = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "2.out")).First();
+            using (var ks = KeySet.LayerSecurity(FileSystemKeySet.Creator(keySetPath)))
+            using (var verifier = new Verifier(ks))
+            {
+                var activeDecrypted = verifier.Verify(Input, activeSig);
+                Expect(activeDecrypted, Is.True);
+                var primaryDecrypted = verifier.Verify(Input, primarySig);
+                Expect(primaryDecrypted, Is.True);
+            }
+        }
+
+        [Test]
+        public void JWTTest()
+        {
+            var keySetPath = Path.Combine(GetTestDirPath(), "rsa-sign-certcrypted");
+
+            var issueDate = DateTime.UtcNow;
+            var expireDate = issueDate.AddDays(1);
+            
+            using (var pfxStream = File.OpenRead(PfxPath()))
+            using (var ks = KeySet.LayerSecurity(FileSystemKeySet.Creator(keySetPath),
+                CertEncryptedKeySet.Creator(pfxStream, ()=> PfxPass)))
+            {
+                var signingKey = new KeyzureSigningCredentials(ks);
+
+
+                var token = new JwtSecurityToken("http://test.issue", "http://test.audience", new ClaimsIdentity().Claims , issueDate,
+                    expireDate, signingKey);
+
+                var handler = new JwtSecurityTokenHandler();
+
+                var jwt = handler.WriteToken(token);
+                
+                Console.WriteLine(jwt);
+            }
+
         }
        
     }

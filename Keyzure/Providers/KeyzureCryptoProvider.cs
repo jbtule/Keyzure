@@ -7,7 +7,6 @@ using Keyczar.Crypto;
 using Keyzure.Utility;
 using System.Collections.Generic;
 using System.Globalization;
-using Keyczar.Compat;
 using Keyczar.Unofficial;
 
 namespace Keyzure.Providers
@@ -95,71 +94,6 @@ namespace Keyzure.Providers
                 throw new InvalidKeyTypeException($"Primary key Is not a valid JWA != '{primaryKey?.KeyType}'");
             }
             return alg;
-        }
-    }
-
-    public class KeyzureSigningCredentials : SigningCredentials
-    {
-    
-        public KeyzureSigningCredentials(IKeySet keySet)
-            : base(new KeySetKey(keySet), KeyzureCryptoProvider.GetAlgorithmFromKeySet(keySet))
-        {
-        }
-    }
-    
-    public class KeySetKey : SecurityKey
-    {
-        public IKeySet KeySet { get; }
-
-        public KeySetKey(IKeySet keySet)
-        {
-            KeySet = keySet;
-            var primaryKey = keySet.GetPrimaryKey();
-            KeyId = KeySet.Metadata.Name;
-            KeySize = primaryKey?.Size ?? -1;
-            CryptoProviderFactory.CustomCryptoProvider = new KeyzureCryptoProvider();
-        }
-
-        public override int KeySize { get; }
-    }
-    
-    public class KeyzureSignatureProvider: SignatureProvider
-    {
-        private readonly bool _signing;
-        private IKeySet _keySet;
-
-        public KeyzureSignatureProvider(KeySetKey key, string algorithm, bool signing) : base(key, algorithm)
-        {
-            _keySet = key.KeySet;
-            _signing = signing;
-        }
-
-        public override byte[] Sign(byte[] input)
-        {
-            if (!_signing)
-            {
-                throw new InvalidOperationException();
-            }
-            using (var vanillaSigner = new VanillaSigner(_keySet))
-            {
-                return vanillaSigner.Sign(input);
-            }
-        }
-
-        public override bool Verify(byte[] input, byte[] signature)
-        {
-            using (var vanillaSigner = new VanillaVerifier(_keySet))
-            {
-                return vanillaSigner.Verify(input,signature);
-            }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _keySet = null;
-            }
         }
     }
 }

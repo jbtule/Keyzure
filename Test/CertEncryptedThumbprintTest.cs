@@ -56,7 +56,6 @@ namespace Test
         }
         
         [Test]
-        [Platform(Include = "Win")]
         public void BasicThumbprintTest()
         {
             var dataPath = Path.Combine(GetTestDirPath(), "aes-gcm-certcrypted");
@@ -71,6 +70,25 @@ namespace Test
                 Expect(activeDecrypted, Is.EqualTo(CertEncryptedTest.Input));
                 var primaryDecrypted = crypter.Decrypt(primaryCiphertext);
                 Expect(primaryDecrypted, Is.EqualTo(CertEncryptedTest.  Input));
+            }
+        }
+        
+          
+        [Test]
+        public void BasicThumbprintTestSign()
+        {
+            var dataPath = Path.Combine(GetTestDirPath(), "rsa-sign-certcrypted");
+
+            var activeSig = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "1.out")).First();
+            var primarySig = (WebBase64) File.ReadAllLines(Path.Combine(dataPath, "2.out")).First();
+            using (var ks = KeySet.LayerSecurity(FileSystemKeySet.Creator(dataPath),
+                CertEncryptedKeySet.Creator(GetThumbprint())))
+            using (var verifier = new Verifier(ks))
+            {
+                var activeDecrypted = verifier.Verify(CertEncryptedTest.Input, activeSig);
+                Expect(activeDecrypted, Is.True);
+                var primaryDecrypted = verifier.Verify(CertEncryptedTest.Input, primarySig);
+                Expect(primaryDecrypted, Is.True);
             }
         }
     }

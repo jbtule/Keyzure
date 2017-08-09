@@ -13,6 +13,7 @@
 open Keyczar
 open Keyczar.Compat
 open Keyzure
+open System;
 open System.IO;
 open System.Security.Cryptography.X509Certificates;
 open System.Linq
@@ -36,28 +37,59 @@ if not <| File.Exists(pfxPath) then
                     |> Seq.distinct
                     |> fun x -> File.WriteAllLines(Path.Combine(certDir, "thumbprint.txt"), x)
 
+do
+    let keySetAndDataPath = "aes-gcm-certcrypted"
+    let name = "aes-gcm"
+    let kind = KeyKind.Symmetric
+    let purpose = KeyPurpose.DecryptAndEncrypt;
+    if not <| Directory.Exists(keySetAndDataPath) then
+        printfn "Creating %s keyset & samples" keySetAndDataPath
+        Directory.CreateDirectory(keySetAndDataPath) |> ignore
+        use pfxRead = File.OpenRead(pfxPath)
+        use layeredWriter = ()
+                              |> FileSystemKeySetWriter.Creator(keySetAndDataPath).Invoke
+                              |> CertEncryptedKeySetWriter.Creator(pfxRead,fun ()-> "test").Invoke
+        let ksm = KeyMetadata(Kind = kind, Purpose = purpose, Name = name);
+        use ks = new MutableKeySet(ksm)
+        ks.AddKey(KeyStatus.Primary) |> ignore
+        use crypter1 = new Encrypter(ks)
+        File.WriteAllText(Path.Combine(keySetAndDataPath, "1.out"), crypter1.Encrypt(input).ToString())
+        ks.AddKey(KeyStatus.Primary) |> ignore
+        use crypter2 = new Encrypter(ks)
+        File.WriteAllText(Path.Combine(keySetAndDataPath, "2.out"), crypter2.Encrypt(input).ToString())
+        if not <| ks.Save(layeredWriter) then
+            printfn "Failed to create  %s keyset & samples" keySetAndDataPath
+            exit -10
+do
+    let keySetAndDataPath = "rsa-sign-certcrypted"
+    let name = "rsa-sign"
+    let kind = KeyKind.Private
+    let purpose = KeyPurpose.SignAndVerify
+    let size = 3072;
+    if not <| Directory.Exists(keySetAndDataPath) then
+        printfn "Creating %s keyset & samples" keySetAndDataPath
+        Directory.CreateDirectory(keySetAndDataPath) |> ignore
+        use pfxRead = File.OpenRead(pfxPath)
+        use layeredWriter = ()
+                              |> FileSystemKeySetWriter.Creator(keySetAndDataPath).Invoke
+                              |> CertEncryptedKeySetWriter.Creator(pfxRead,fun ()-> "test").Invoke
+        let ksm = KeyMetadata(Kind = kind, Purpose = purpose, Name = name);
+        use ks = new MutableKeySet(ksm)
+        ks.AddKey(KeyStatus.Primary, size) |> ignore
+        use signer1 = new Signer(ks)
+        File.WriteAllText(Path.Combine(keySetAndDataPath, "1.out"), signer1.Sign(input).ToString())
+        ks.AddKey(KeyStatus.Primary, size) |> ignore
+        use signer2 = new Signer(ks)
+        File.WriteAllText(Path.Combine(keySetAndDataPath, "2.out"), signer2.Sign(input).ToString())
+        if not <| ks.Save(layeredWriter) then
+            printfn "Failed to create  %s keyset & samples" keySetAndDataPath
+            exit -10
+        ks.ExportPrimaryAsPkcs(Path.Combine(keySetAndDataPath, "primary.pem"), null) |> ignore
 
-let aesgcmPath = "aes-gcm-certcrypted"
-if not <| Directory.Exists(aesgcmPath) then
-    printfn "Creating %s keyset & samples" aesgcmPath
-    Directory.CreateDirectory(aesgcmPath) |> ignore
-    use pfxRaed = File.OpenRead(pfxPath)
-    use layeredWriter = ()
-                          |> FileSystemKeySetWriter.Creator(aesgcmPath).Invoke
-                          |> CertEncryptedKeySetWriter.Creator(pfxRaed,fun ()-> "test").Invoke
-    let ksm = KeyMetadata(Kind = KeyKind.Symmetric, Purpose = KeyPurpose.DecryptAndEncrypt, Name ="aes-gcm");
-    use ks = new MutableKeySet(ksm)
-    ks.AddKey(KeyStatus.Primary) |> ignore
-    use crypter1 = new Encrypter(ks)
-    File.WriteAllText(Path.Combine(aesgcmPath, "1.out"), crypter1.Encrypt(input).ToString())
-    ks.AddKey(KeyStatus.Primary) |> ignore
-    use crypter2 = new Encrypter(ks)
-    File.WriteAllText(Path.Combine(aesgcmPath, "2.out"), crypter2.Encrypt(input).ToString())
-    if not <| ks.Save(layeredWriter) then
-        printfn "Failed to create  %s keyset & samples" aesgcmPath
-        exit -10
-
-
-
-
-
+        let pubKeySetAndDataPath = keySetAndDataPath + ".public"
+        Directory.CreateDirectory(pubKeySetAndDataPath) |> ignore
+        let pubks = ks.PublicKey()
+        use pubWriter = FileSystemKeySetWriter.Creator(pubKeySetAndDataPath).Invoke()
+        if not <| ks.Save(pubWriter) then
+            printfn "Failed to create  %s keyset & samples" keySetAndDataPath
+            exit -10

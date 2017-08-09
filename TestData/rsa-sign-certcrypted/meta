@@ -1,0 +1,1 @@
+{"format":"1","kind":"PRIVATE","name":"rsa-sign","purpose":"SIGN_AND_VERIFY","encrypted":true,"versions":[{"type":"C#_RSA_SIGN_PRIV","keyId":"ADuaQ8s","versionNumber":1,"exportable":false,"status":"ACTIVE"},{"type":"C#_RSA_SIGN_PRIV","keyId":"ANpxd24","versionNumber":2,"exportable":false,"status":"PRIMARY"}]}
