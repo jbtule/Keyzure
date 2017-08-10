@@ -13,19 +13,9 @@ using NUnit.Framework.Internal.Filters;
 namespace Test
 {
     [TestFixture]
-    public class CertEncryptedTest:AssertionHelper
+    public class CertEncryptedTest:TestBaseHelper
     {
-        public  static string GetTestDirPath()
-        {
-            var location = Assembly.GetAssembly(typeof(CertEncryptedTest)).Location;
-            var testDir = Path.Combine(location,"..", "..", "..", "..", "..", "TestData");
-            return Path.GetFullPath(testDir);
-        }
-
-        public static string PfxPath() => Path.Combine(GetTestDirPath(), "cert", "private.pfx");
-
-        public static string PfxPass => "test";
-        public static string Input => "This is some test data";
+ 
 
     
         [Test]
@@ -85,32 +75,6 @@ namespace Test
             }
         }
 
-        [Test]
-        public void JWTTest()
-        {
-            var keySetPath = Path.Combine(GetTestDirPath(), "rsa-sign-certcrypted");
-
-            var issueDate = DateTime.UtcNow;
-            var expireDate = issueDate.AddDays(1);
-            
-            using (var pfxStream = File.OpenRead(PfxPath()))
-            using (var ks = KeySet.LayerSecurity(FileSystemKeySet.Creator(keySetPath),
-                CertEncryptedKeySet.Creator(pfxStream, ()=> PfxPass)))
-            {
-                var signingKey = new KeyzureSigningCredentials(ks);
-
-
-                var token = new JwtSecurityToken("http://test.issue", "http://test.audience", new ClaimsIdentity().Claims , issueDate,
-                    expireDate, signingKey);
-
-                var handler = new JwtSecurityTokenHandler();
-
-                var jwt = handler.WriteToken(token);
-                
-                Console.WriteLine(jwt);
-            }
-
-        }
-       
+ 
     }
 }

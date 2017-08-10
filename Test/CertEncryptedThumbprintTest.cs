@@ -12,14 +12,8 @@ namespace Test
 {
     [TestFixture]   
     [Platform(Include = "Win")]
-    public class CertEncryptedThumbprintTest:AssertionHelper
+    public class CertEncryptedThumbprintTest:TestBaseHelper
     {
-        private string GetTestDirPath()
-        {
-            var location = Assembly.GetAssembly(this.GetType()).Location;
-            var testDir = Path.Combine(location,"..", "..", "..", "..", "..", "TestData");
-            return Path.GetFullPath(testDir);
-        }
 
         private string GetThumbprint() => File.ReadAllText(Path.Combine(GetTestDirPath(), "cert", "thumbprint.txt")).Trim();
 

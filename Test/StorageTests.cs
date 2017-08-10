@@ -10,10 +10,9 @@ namespace Test
     [TestFixture(Category = "AzureEmulator")]
     [NonParallelizable]
     [Platform(Include = "Win")]
-    public class StorageTests:AssertionHelper
+    public class StorageTests:TestBaseHelper
     {
         public static readonly string DefaultContainer = "keyzure-test";
-        public static string Input => "This is some test data";
         private bool _wasUp;
 
         [OneTimeSetUp]

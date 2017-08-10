@@ -1,0 +1,1 @@
+{"format":"1","kind":"SYMMETRIC","name":"hmac-sha2-sign","purpose":"SIGN_AND_VERIFY","encrypted":false,"versions":[{"type":"C#_HMAC_SHA2","keyId":"ALSzoNg","versionNumber":1,"exportable":false,"status":"ACTIVE"},{"type":"C#_HMAC_SHA2","keyId":"AEpPt_o","versionNumber":2,"exportable":false,"status":"PRIMARY"}]}

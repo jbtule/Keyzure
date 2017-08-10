@@ -18,14 +18,32 @@ namespace Keyzure.Providers
         internal static readonly string RsaPssSha256 ="PS256";
         internal static readonly string RsaPssSha384 ="PS384";
         internal static readonly string RsaPssSha512 ="PS512";
+        
+        internal static readonly string HmacSha256 ="HS256";
+        internal static readonly string HmacSha384 ="HS384";
+        internal static readonly string HmacSha512 ="HS512";
 
+        
         
         public bool IsSupportedAlgorithm(string algorithm, params object[] args)
         {
                  
-            var hashSet = new HashSet<string> {RsaPssSha256, RsaPssSha384, RsaPssSha512};
+            var asymmHashSet = new HashSet<string>
+            {
+                RsaPssSha256, 
+                RsaPssSha384,
+                RsaPssSha512,
+                
+            };
+
+            var symmSignSet = new HashSet<string>()
+            {
+                HmacSha256,
+                HmacSha384,
+                HmacSha512
+            };
             
-            if (args.Length != 2 || !hashSet.Contains(algorithm))
+            if (args.Length != 2 || (!asymmHashSet.Contains(algorithm) && !symmSignSet.Contains(algorithm)))
             {
                 return false;
             }
@@ -33,13 +51,34 @@ namespace Keyzure.Providers
             {
                 return false;
             }
-
+            
+            var isSymm = key.KeySet.Metadata.Kind == KeyKind.Symmetric;
             var isPrivate = key.KeySet.Metadata.Kind == KeyKind.Private;
             var isPublic = key.KeySet.Metadata.Kind == KeyKind.Public;
             var isSign = key.KeySet.Metadata.Purpose == KeyPurpose.SignAndVerify;
             var isVerify = key.KeySet.Metadata.Purpose == KeyPurpose.Verify;
-                
-            if (shouldSign && isPrivate && isSign)
+
+            if (!isSign && !isVerify)
+            {
+                return false; //Right now only support signing algorithms
+            }
+            
+            
+            if (isSymm && !symmSignSet.Contains(algorithm))
+            {
+                return false;
+            }
+            
+            if (!isSymm && !asymmHashSet.Contains(algorithm))
+            {
+                return false;
+            }
+            
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse  -- code may have other options in future
+            if (isSymm && (isSign || isVerify))
+            {
+                return GetAlgorithmFromKeySet(key.KeySet) == algorithm;
+            }else if (shouldSign && isPrivate && isSign)
             {
                 return GetAlgorithmFromKeySet(key.KeySet) == algorithm;
             }
@@ -80,6 +119,15 @@ namespace Keyzure.Providers
                 case Keyczar.Unofficial.RsaPrivateSignKey rsaKey
                 when rsaKey.Digest == Keyczar.Unofficial.DigestAlg.Sha512:
                     return KeyzureCryptoProvider.RsaPssSha512;
+                case Keyczar.Unofficial.HmacSha2Key hmacKey
+                when hmacKey.Digest == Keyczar.Unofficial.DigestAlg.Sha256:
+                    return KeyzureCryptoProvider.HmacSha256;
+                case Keyczar.Unofficial.HmacSha2Key hmacKey
+                when hmacKey.Digest == Keyczar.Unofficial.DigestAlg.Sha384:
+                    return KeyzureCryptoProvider.HmacSha384;
+                case Keyczar.Unofficial.HmacSha2Key hmacKey
+                when hmacKey.Digest == Keyczar.Unofficial.DigestAlg.Sha512:
+                    return KeyzureCryptoProvider.HmacSha512;
                 default:
                     return null;
             }

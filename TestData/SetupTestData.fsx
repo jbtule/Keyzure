@@ -93,3 +93,26 @@ do
         if not <| ks.Save(pubWriter) then
             printfn "Failed to create  %s keyset & samples" keySetAndDataPath
             exit -10
+do
+    let keySetAndDataPath = "hmac-sha2-sign"
+    let name = "hmac-sha2-sign"
+    let kind = KeyKind.Symmetric
+    let purpose = KeyPurpose.SignAndVerify
+    let size = 128;
+    if not <| Directory.Exists(keySetAndDataPath) then
+        printfn "Creating %s keyset & samples" keySetAndDataPath
+        Directory.CreateDirectory(keySetAndDataPath) |> ignore
+        use pfxRead = File.OpenRead(pfxPath)
+        use layeredWriter = ()
+                              |> FileSystemKeySetWriter.Creator(keySetAndDataPath).Invoke
+        let ksm = KeyMetadata(Kind = kind, Purpose = purpose, Name = name);
+        use ks = new MutableKeySet(ksm)
+        ks.AddKey(KeyStatus.Primary, size) |> ignore
+        use signer1 = new Signer(ks)
+        File.WriteAllText(Path.Combine(keySetAndDataPath, "1.out"), signer1.Sign(input).ToString())
+        ks.AddKey(KeyStatus.Primary, size) |> ignore
+        use signer2 = new Signer(ks)
+        File.WriteAllText(Path.Combine(keySetAndDataPath, "2.out"), signer2.Sign(input).ToString())
+        if not <| ks.Save(layeredWriter) then
+            printfn "Failed to create  %s keyset & samples" keySetAndDataPath
+            exit -10
