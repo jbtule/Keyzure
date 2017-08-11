@@ -2,6 +2,17 @@
   <PropertyGroup>
     <TargetFramework>net46</TargetFramework>
     <VersionPrefix>0.3.1</VersionPrefix>
+    <Description>Extensions to Keyczar for safe keystorage and usage using Azure. </Description>
+    <Company></Company>
+    <Authors> jbtule </Authors>
+    <Copyright>Copyright © Contributors 2017</Copyright>
+    <PackageProjectUrl>https://github.com/jbtule/Keyzure</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/jbtule/Keyzure/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSource>True</IncludeSource>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+     <PackageTags>cryptography crypto security encryption symmetric asymmetric jwt azure</PackageTags>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Keyczar" Version="0.8.4-beta107" />
