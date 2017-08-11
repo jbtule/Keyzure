@@ -14,12 +14,12 @@ namespace Keyzure.Keys
             throw new NotImplementedException();
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void GenerateKey(int size, KeyczarConfig config)
         {
             throw new NotImplementedException();
         }
 
-        protected override void GenerateKey(int size)
+        protected override void Dispose(bool disposing)
         {
             throw new NotImplementedException();
         }

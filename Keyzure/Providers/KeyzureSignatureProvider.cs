@@ -1,6 +1,7 @@
 using System;
 using Keyczar;
 using Keyczar.Compat;
+using Keyczar.Unofficial;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Keyzure.Providers
@@ -22,17 +23,26 @@ namespace Keyzure.Providers
             {
                 throw new InvalidOperationException();
             }
+
+            JwtAlg chosenAlg = Algorithm;
+
+            if (!Jwt.IsValidAlg(chosenAlg, _keySet.GetPrimaryKey()))
+            {
+                throw new InvalidKeyTypeException("Key doesn't match chosen algorithm");
+            }
+            
             using (var vanillaSigner = new VanillaSigner(_keySet))
             {
-                return vanillaSigner.Sign(input);
+                var sig = vanillaSigner.Sign(input);
+                return sig;
             }
         }
 
         public override bool Verify(byte[] input, byte[] signature)
         {
-            using (var vanillaSigner = new VanillaVerifier(_keySet))
+            using (var vanillaVerifier = new VanillaVerifier(_keySet))
             {
-                return vanillaSigner.Verify(input,signature);
+                return vanillaVerifier.Verify(input,signature);
             }
         }
 
