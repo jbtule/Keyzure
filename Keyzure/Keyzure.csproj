@@ -3,7 +3,8 @@
     <TargetFramework>net46</TargetFramework>
     <VersionPrefix>0.3.1</VersionPrefix>
     <Description>Extensions to Keyczar for safe keystorage and usage using Azure. </Description>
-    <Company></Company>
+    <Company>
+    </Company>
     <Authors> jbtule </Authors>
     <Copyright>Copyright © Contributors 2017</Copyright>
     <PackageProjectUrl>https://github.com/jbtule/Keyzure</PackageProjectUrl>
@@ -11,11 +12,11 @@
     <IncludeSymbols>True</IncludeSymbols>
     <IncludeSource>True</IncludeSource>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-     <PackageTags>cryptography crypto security encryption symmetric asymmetric jwt azure</PackageTags>
+    <PackageTags>cryptography crypto security encryption symmetric asymmetric jwt azure</PackageTags>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Keyczar" Version="0.8.4-beta107" />
+    <PackageReference Include="Keyczar" Version="0.8.5-alpha110" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.1.4" />
     <PackageReference Include="System.Net.Http" Version="4.3.2" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.2.1" />

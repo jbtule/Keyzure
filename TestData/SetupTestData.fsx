@@ -13,10 +13,13 @@
 open Keyczar
 open Keyczar.Compat
 open Keyzure
-open System;
-open System.IO;
-open System.Security.Cryptography.X509Certificates;
+open System
+open System.IO
+open System.Security.Cryptography.X509Certificates
 open System.Linq
+open Keyczar.Unofficial
+open System.Text
+
 let input = "This is some test data"
 let certDir = "cert"
 Directory.CreateDirectory(certDir) |> ignore
@@ -116,3 +119,45 @@ do
         if not <| ks.Save(layeredWriter) then
             printfn "Failed to create  %s keyset & samples" keySetAndDataPath
             exit -10
+
+do 
+        let keySetAndDataPath = Path.Combine("jwt.io", "hs256")
+        let name = "hmac-sha2-secret"
+        let kind = KeyKind.Symmetric
+        let purpose = KeyPurpose.SignAndVerify
+        let size = 128;
+        if not <| Directory.Exists(keySetAndDataPath) then
+            printfn "Creating %s keyset & samples" keySetAndDataPath
+            Directory.CreateDirectory(keySetAndDataPath) |> ignore
+            use layeredWriter = ()
+                              |> FileSystemKeySetWriter.Creator(keySetAndDataPath).Invoke
+            use hmackey = new HmacSha2Key(HmacKeyBytes= Encoding.UTF8.GetBytes("secret"),Digest = DigestAlg.Sha256, HashLength = 32 )
+            let ksm = KeyMetadata(Kind = kind, Purpose = purpose, Name = name);
+            use ks = new MutableKeySet(ksm)
+            ks.AddKey(KeyStatus.Primary, hmackey, comment="Test key from jwt.io") |>ignore
+            if not <| ks.Save(layeredWriter) then
+                printfn "Failed to create  %s keyset & samples" keySetAndDataPath
+                exit -10
+do 
+        let keySetAndDataPath = Path.Combine("jwt.io", "rs256.pub")
+        let name = "rsa-pub-import"
+        let purpose = KeyPurpose.Verify
+        let size = 128;
+        let kind = KeyKind.Public
+
+        if not <| Directory.Exists(keySetAndDataPath) then
+            printfn "Creating %s keyset & samples" keySetAndDataPath
+            Directory.CreateDirectory(keySetAndDataPath) |> ignore
+            use layeredWriter = ()
+                              |> FileSystemKeySetWriter.Creator(keySetAndDataPath).Invoke
+            use iks = ImportedKeySet.Import.PkcsKey(purpose, Path.Combine("jwt.io","rsapub.pem"), official= false, hint = UnofficialKeyType.RSAPubPkcs15Sign)
+            let ksm = KeyMetadata(Kind = kind, Purpose = purpose, Name = name);
+            use ks = new MutableKeySet(ksm)
+            use rsakey = iks.GetPrimaryKey() :?> RsaPublicSignPkcs15Key;
+            rsakey.Digest <- DigestAlg.Sha256;
+            ks.AddKey(KeyStatus.Primary, rsakey, comment="Test key from jwt.io") |>ignore
+            if not <| ks.Save(layeredWriter) then
+                printfn "Failed to create  %s keyset & samples" keySetAndDataPath
+                exit -10
+
+                

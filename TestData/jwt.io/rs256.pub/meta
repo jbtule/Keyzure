@@ -1,0 +1,1 @@
+{"format":"1","kind":"PUBLIC","name":"rsa-pub-import","purpose":"VERIFY","encrypted":false,"versions":[{"type":"C#_RSA_SIGN_PCKS15_PUB","keyId":"4Oppig","versionNumber":1,"comment":"Test key from jwt.io","exportable":false,"status":"PRIMARY"}]}

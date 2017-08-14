@@ -1,0 +1,1 @@
+{"format":"1","kind":"SYMMETRIC","name":"hmac-sha2-secret","purpose":"SIGN_AND_VERIFY","encrypted":false,"versions":[{"type":"C#_HMAC_SHA2","keyId":"rltS2g","versionNumber":1,"comment":"Test key from jwt.io","exportable":false,"status":"PRIMARY"}]}

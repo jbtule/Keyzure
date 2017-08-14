@@ -24,11 +24,25 @@ namespace Keyzure.Providers
             JwtAlg intendedAlg = algorithm;
             
             //currently only support signing, these are the expected args
-            if (args.Length != 2 || !(args[0] is KeySetKey key) || !(args[1] is bool shouldSign))
+            if (args.Length > 2 
+                || args.Length < 1
+                || !(args[0] is KeySetKey key))
             {
                 return false;
             }
-            
+
+            var shouldSign = false;
+            if (args.Length == 2)
+            {
+                if (!(args[1] is bool ss))
+                {
+                    return false;
+                }
+                shouldSign = ss;
+            }
+
+
+
             var isSymm = key.KeySet.Metadata.Kind == KeyKind.Symmetric;
             var isPrivate = key.KeySet.Metadata.Kind == KeyKind.Private;
             var isPublic = key.KeySet.Metadata.Kind == KeyKind.Public;
@@ -48,7 +62,7 @@ namespace Keyzure.Providers
             {
                 return  Jwt.IsValidAlg(intendedAlg, key.KeySet.GetPrimaryKey());
             }
-            else if(!shouldSign && (isPrivate || isPublic) && (isSign && isVerify))
+            else if(!shouldSign && (isSign || isVerify) && (isPrivate || isPublic))
             {
                 return key.KeySet.Metadata.Versions.Select(it => key.KeySet.GetKey(it.VersionNumber))
                     .Any(it => Jwt.AlgForKey(it) == intendedAlg);
@@ -66,7 +80,8 @@ namespace Keyzure.Providers
             }
             throw new InvalidKeyTypeException("Not a valid keyset, shouldn't have been called");
         }
-
+        
+       
         public void Release(object cryptoInstance)
         {
             (cryptoInstance as IDisposable)?.Dispose();
