@@ -41,6 +41,10 @@ namespace Keyzure
             var certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbPrint, false);
             var cert = certCollection.OfType<X509Certificate2>().FirstOrDefault();
             var privKey = cert?.GetRSAPrivateKey();
+            if(privKey == null){
+                throw new InvalidKeyException("Could not find cert that matched thumbprint.");
+            }
+
             var keyParam = DotNetUtilities.GetRsaKeyPair(privKey).Private as RsaPrivateCrtKeyParameters;
             var key = CertEncryptedKeySet.KeyFromBouncyCastle(keyParam);
 

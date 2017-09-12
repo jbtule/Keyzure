@@ -10,6 +10,7 @@
 open Keyzure
 open Keyczar
 open Keyczar.Compat
+open System
 open System.IO
 open System.Security.Cryptography.X509Certificates
 open System.Linq
@@ -30,16 +31,23 @@ let thumbprint =
         let ksm = KeyMetadata(Kind = KeyKind.Private, Purpose = KeyPurpose.DecryptAndEncrypt, Name = pfxName);
         use ks = new MutableKeySet(ksm)
         ks.AddKey(KeyStatus.Primary, keySize=2048) |> ignore
-        if not <| ks.ExportAsPkcs12(pfxPath, fun ()-> "test") then
+        let pass = Helper.readPassword()
+        if not <| ks.ExportAsPkcs12(pfxPath, fun ()-> pass) then
             printfn "Failed to create pfx file %s" pfxPath
             exit -10
         let certBundle = X509Certificate2Collection();
-        certBundle.Import(pfxPath, name, X509KeyStorageFlags.DefaultKeySet);
-        certBundle.OfType<X509Certificate2>() 
+        certBundle.Import(pfxPath, pass, X509KeyStorageFlags.PersistKeySet ||| X509KeyStorageFlags.UserKeySet ||| X509KeyStorageFlags.Exportable);
+        let thumb = certBundle.OfType<X509Certificate2>() 
                         |> Seq.filter (fun x-> x.HasPrivateKey)
                         |> Seq.map (fun x-> x.Thumbprint)
                         |> Seq.distinct
                         |> Seq.head
+        let cert = certBundle.OfType<X509Certificate2>().First(fun it -> it.HasPrivateKey && it.Thumbprint = thumb)
+        use store = new X509Store(StoreName.My, StoreLocation.CurrentUser)
+        store.Open(OpenFlags.ReadWrite);
+        store.Add(cert)
+        store.Close();
+        thumb
     else
         thumbprintOption |> Option.get
 
@@ -54,21 +62,24 @@ let purpose = Helper.readChoiceFromListValue ["Sign & Verify",KeyPurpose.SignAnd
 let ksm = KeyMetadata(Kind = kind, Purpose = purpose, Name = name);
 let  ks = new MutableKeySet(ksm)
 
-let layeredWriter = ()
-                      |> StorageKeySetWriter.Create(storageAccount, containerName, containerPath).Invoke
-                      |> CertEncryptedKeySetWriter.Creator(thumbprint).Invoke
-
-if not <| ks.Save(layeredWriter) then
-    printfn "Failed to create  %s keyset" name
-    exit -10
 
 let settingsPath = (Path.Combine("Secrets", sprintf "%s.json" name))
-
 Helper.writeConfig {
                         AzureStorageConnectionString = connectionString
+                        AzureContainerName = containerName
                         CertThumbprint = thumbprint
                         KeyzurePath = containerPath
                    } 
                    settingsPath
 
-printfn "Created Keyset and Saved settings to %s." settingsPath
+
+let layeredWriter = ()
+                      |> StorageKeySetWriter.Create(storageAccount, containerName, containerPath).Invoke
+                      |> CertEncryptedKeySetWriter.Creator(thumbprint).Invoke
+
+if not <| ks.Save(layeredWriter) then
+    Console.WriteLine(sprintf "Failed to create  %s keyset" name)
+    exit -10
+
+
+Console.WriteLine(sprintf "Created Keyset and Saved settings to %s." settingsPath)

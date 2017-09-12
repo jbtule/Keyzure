@@ -28,6 +28,7 @@ namespace Keyzure
         {
             _client = account.CreateCloudBlobClient();
             _container = _client.GetContainerReference(container);
+            _container.CreateIfNotExists();
             _keySetPath = keySetPath;
             _options = options;
             _guid = Guid.NewGuid().ToString();
@@ -63,6 +64,7 @@ namespace Keyzure
             var guidDir = Path.Combine(_keySetPath, _guid).Replace(Path.DirectorySeparatorChar, '/');
             var directory = _container.GetDirectoryReference(guidDir);
             var blobs = directory.ListBlobs(options:_options).ToList().OfType<CloudBlockBlob>().ToList();
+            
             if (_success)
             {
                 var tasks = new List<Task>();
